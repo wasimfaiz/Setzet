@@ -7,6 +7,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/7.3.2/pixi.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -81,10 +82,28 @@
             text-decoration: none;
             font-weight: 500;
             transition: color 0.3s;
+            position: relative;
+            display: inline-block;
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--accent);
+            transition: width 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
 
         .nav-links a:hover {
             color: var(--accent);
+            transform: translateX(5px);
+        }
+
+        .nav-links a:hover::after {
+            width: 100%;
         }
 
         /* Hamburger Menu */
@@ -444,32 +463,47 @@
             line-height: 1.1;
             letter-spacing: -0.01em;
             position: relative;
+        }
+
+        #heroTitle {
+            position: relative;
+            display: inline-block;
+        }
+
+        #heroTextOriginal {
+            position: relative;
+            z-index: 2;
             cursor: pointer;
-            transition: transform 0.3s ease;
+            transition: opacity 0.6s ease;
+            display: block;
         }
 
-        .hero h1:hover {
-            transform: scale(1.02);
+        #heroTextOriginal:hover {
+            opacity: 0;
         }
 
-        /* Water ripple effect container */
-        .water-effect {
+        #liquidTextContainer {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
+            z-index: 1;
             pointer-events: none;
-            z-index: 10;
+            opacity: 0;
+            transition: opacity 0.6s ease;
+        }
+
+        #liquidTextContainer canvas {
+            background: transparent !important;
+        }
+
+        #heroTextOriginal:hover + #liquidTextContainer {
+            opacity: 1;
         }
 
         .water-canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
+            display: none;
         }
 
         .hero p {
@@ -641,8 +675,9 @@
         }
 
         .service-card-large {
-            width: 450px;
-            height: 550px;
+            width: 420px;
+            min-width: 420px;
+            height: 520px;
             flex-shrink: 0;
             position: relative;
             border-radius: 30px;
@@ -687,6 +722,10 @@
             background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
         }
 
+        .service-card-large:nth-child(4) {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        }
+
         .service-card-large:nth-child(1)::before {
             background: linear-gradient(135deg, 
                 rgba(102, 126, 234, 0.9) 0%, 
@@ -703,6 +742,12 @@
             background: linear-gradient(135deg, 
                 rgba(79, 172, 254, 0.9) 0%, 
                 rgba(0, 242, 254, 0.7) 100%);
+        }
+
+        .service-card-large:nth-child(4)::before {
+            background: linear-gradient(135deg, 
+                rgba(247, 112, 154, 0.9) 0%, 
+                rgba(254, 225, 64, 0.7) 100%);
         }
 
         .service-card-content {
@@ -801,11 +846,6 @@
             50% { opacity: 1; }
         }
 
-        .services-spacer {
-            height: 30vh;
-            position: relative;
-        }
-
         /* Perspective grid background */
         .services::before {
             content: '';
@@ -837,6 +877,54 @@
         .services > * {
             position: relative;
             z-index: 1;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .services {
+                padding-bottom: 0;
+            }
+
+            .services-intro {
+                padding: 4rem 2rem 2rem;
+            }
+
+            .services-intro h2 {
+                font-size: clamp(2.5rem, 12vw, 4rem);
+            }
+
+            .services-horizontal-wrapper {
+                height: auto;
+            }
+
+            .services-scroll-container {
+                position: relative;
+                height: auto;
+                display: block;
+            }
+
+            .services-track {
+                flex-direction: column;
+                gap: 2rem;
+                padding: 0 2rem 4rem;
+            }
+
+            .service-card-large {
+                width: 100%;
+                min-width: 100%;
+                height: auto;
+                min-height: 500px;
+                transform: none !important;
+                opacity: 1 !important;
+            }
+
+            .service-card-content {
+                padding: 2rem;
+            }
+
+            .scroll-indicator {
+                padding: 2rem 2rem 3rem;
+            }
         }
 
         /* Stats Section with Animated Counters */
@@ -3032,8 +3120,8 @@
         <canvas id="hero-canvas"></canvas>
         <div class="hero-content">
             <h1 id="heroTitle">
-                Helping our partners<br>build original brands<br><span style="font-style: italic;">that shine.</span>
-                <canvas class="water-canvas" id="waterCanvas"></canvas>
+                <span id="heroTextOriginal">Helping our partners<br>build original brands<br><span style="font-style: italic;">that shine.</span></span>
+                <div id="liquidTextContainer"></div>
             </h1>
             <p>A strategy-led design studio specializing in laying down the awesome sauce <span style="font-style: italic;">for</span> <span class="rotating-word" id="rotatingWord">Technology</span> brands.</p>
             <button class="cta-button">Start Your Project</button>
@@ -3107,6 +3195,25 @@
                                     <li>Motion Graphics</li>
                                 </ul>
                                 <a href="#contact" class="service-cta">Start Designing</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="service-card-large">
+                        <div class="service-card-content">
+                            <div>
+                                <div class="service-number">04</div>
+                                <h3>Video Production</h3>
+                                <p>Cinematic storytelling that captivates audiences. From concept to post-production, we create videos that drive engagement and conversions.</p>
+                            </div>
+                            <div>
+                                <ul class="service-features">
+                                    <li>Brand Films & Commercials</li>
+                                    <li>Product Videos</li>
+                                    <li>Animation & Motion Design</li>
+                                    <li>Social Media Content</li>
+                                </ul>
+                                <a href="#contact" class="service-cta">Create Video</a>
                             </div>
                         </div>
                     </div>
@@ -3684,6 +3791,8 @@
         // Three.js 3D Scene Setup
         let scene, camera, renderer, geometry, material, mesh;
         let particles = [];
+        let mouseX = 0, mouseY = 0;
+        let targetX = 0, targetY = 0;
 
         function initThreeJS() {
             const canvas = document.getElementById('hero-canvas');
@@ -3727,26 +3836,51 @@
             const wireframeMesh = new THREE.Mesh(wireframeGeometry, wireframeMaterial);
             scene.add(wireframeMesh);
 
-            // Add particles
-            const particlesGeometry = new THREE.BufferGeometry();
-            const particlesCount = 1000;
-            const posArray = new Float32Array(particlesCount * 3);
+            // ENHANCED: Create multiple particle systems with different properties
+            const particleConfigs = [
+                { count: 2000, size: 0.02, speed: 0.001, color: 0x8B5CF6, opacity: 0.6 },
+                { count: 1000, size: 0.015, speed: 0.0015, color: 0xA78BFA, opacity: 0.4 },
+                { count: 500, size: 0.025, speed: 0.0008, color: 0x8B5CF6, opacity: 0.8 }
+            ];
 
-            for(let i = 0; i < particlesCount * 3; i++) {
-                posArray[i] = (Math.random() - 0.5) * 15;
-            }
+            particleConfigs.forEach((config, index) => {
+                const particlesGeometry = new THREE.BufferGeometry();
+                const posArray = new Float32Array(config.count * 3);
+                const velocities = new Float32Array(config.count * 3);
 
-            particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
-            const particlesMaterial = new THREE.PointsMaterial({
-                size: 0.015,
-                color: 0x8B5CF6,
-                transparent: true,
-                opacity: 0.6
+                for(let i = 0; i < config.count * 3; i += 3) {
+                    // Spread particles in a larger area
+                    posArray[i] = (Math.random() - 0.5) * 20;
+                    posArray[i + 1] = (Math.random() - 0.5) * 20;
+                    posArray[i + 2] = (Math.random() - 0.5) * 20;
+                    
+                    // Random velocities
+                    velocities[i] = (Math.random() - 0.5) * config.speed;
+                    velocities[i + 1] = (Math.random() - 0.5) * config.speed;
+                    velocities[i + 2] = (Math.random() - 0.5) * config.speed;
+                }
+
+                particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+                particlesGeometry.setAttribute('velocity', new THREE.BufferAttribute(velocities, 3));
+
+                const particlesMaterial = new THREE.PointsMaterial({
+                    size: config.size,
+                    color: config.color,
+                    transparent: true,
+                    opacity: config.opacity,
+                    blending: THREE.AdditiveBlending
+                });
+
+                const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);
+                scene.add(particlesMesh);
+                particles.push({
+                    mesh: particlesMesh,
+                    geometry: particlesGeometry,
+                    velocities: velocities,
+                    originalPositions: posArray.slice(),
+                    speed: config.speed
+                });
             });
-
-            const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);
-            scene.add(particlesMesh);
-            particles.push(particlesMesh);
 
             // Lighting
             const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
@@ -3763,10 +3897,7 @@
             // Handle window resize
             window.addEventListener('resize', onWindowResize, false);
 
-            // Mouse interaction
-            let mouseX = 0;
-            let mouseY = 0;
-
+            // Mouse interaction - smooth cursor tracking
             document.addEventListener('mousemove', (event) => {
                 mouseX = (event.clientX / window.innerWidth) * 2 - 1;
                 mouseY = -(event.clientY / window.innerHeight) * 2 + 1;
@@ -3776,23 +3907,59 @@
             function animate() {
                 requestAnimationFrame(animate);
 
-                // Rotate main mesh
-                mesh.rotation.x += 0.005;
-                mesh.rotation.y += 0.005;
-                wireframeMesh.rotation.x += 0.005;
-                wireframeMesh.rotation.y += 0.005;
+                // Smooth mouse following
+                targetX += (mouseX - targetX) * 0.05;
+                targetY += (mouseY - targetY) * 0.05;
 
-                // Mouse interaction
-                mesh.rotation.y += mouseX * 0.01;
-                mesh.rotation.x += mouseY * 0.01;
-
-                // Animate particles
-                particles.forEach(particle => {
-                    particle.rotation.y += 0.001;
-                });
+                // Rotate main mesh with cursor influence
+                mesh.rotation.x += 0.005 + targetY * 0.01;
+                mesh.rotation.y += 0.005 + targetX * 0.01;
+                wireframeMesh.rotation.x += 0.005 + targetY * 0.01;
+                wireframeMesh.rotation.y += 0.005 + targetX * 0.01;
 
                 // Gentle floating animation
-                mesh.position.y = Math.sin(Date.now() * 0.001) * 0.3;
+                mesh.position.y = Math.sin(Date.now() * 0.001) * 0.3 + targetY * 0.5;
+                mesh.position.x = targetX * 0.5;
+
+                // Animate particles with cursor interaction
+                particles.forEach((particleSystem, systemIndex) => {
+                    particleSystem.mesh.rotation.y += 0.001 * (systemIndex + 1);
+                    particleSystem.mesh.rotation.x += 0.0005 * (systemIndex + 1);
+                    
+                    const positions = particleSystem.geometry.attributes.position.array;
+                    const velocities = particleSystem.velocities;
+                    const originalPositions = particleSystem.originalPositions;
+
+                    for(let i = 0; i < positions.length; i += 3) {
+                        // Particle movement
+                        positions[i] += velocities[i];
+                        positions[i + 1] += velocities[i + 1];
+                        positions[i + 2] += velocities[i + 2];
+
+                        // Cursor attraction effect
+                        const dx = targetX * 5 - positions[i];
+                        const dy = targetY * 5 - positions[i + 1];
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (distance < 3) {
+                            positions[i] += dx * 0.02;
+                            positions[i + 1] += dy * 0.02;
+                        }
+
+                        // Boundary check - wrap around
+                        if (Math.abs(positions[i]) > 10) {
+                            positions[i] = originalPositions[i];
+                        }
+                        if (Math.abs(positions[i + 1]) > 10) {
+                            positions[i + 1] = originalPositions[i + 1];
+                        }
+                        if (Math.abs(positions[i + 2]) > 10) {
+                            positions[i + 2] = originalPositions[i + 2];
+                        }
+                    }
+
+                    particleSystem.geometry.attributes.position.needsUpdate = true;
+                });
 
                 renderer.render(scene, camera);
             }
@@ -3809,113 +3976,147 @@
         // Initialize Three.js when page loads
         window.addEventListener('load', initThreeJS);
 
-        // Water Ripple Effect on Hero H1
+        // Liquid Text Effect with PixiJS
         const heroTitle = document.getElementById('heroTitle');
-        const waterCanvas = document.getElementById('waterCanvas');
-        
-        if (heroTitle && waterCanvas) {
-            const ctx = waterCanvas.getContext('2d');
-            let ripples = [];
-            
-            // Set canvas size
-            function resizeCanvas() {
-                waterCanvas.width = heroTitle.offsetWidth;
-                waterCanvas.height = heroTitle.offsetHeight;
-            }
-            resizeCanvas();
-            window.addEventListener('resize', resizeCanvas);
+        const liquidContainer = document.getElementById('liquidTextContainer');
+        const heroTextOriginal = document.getElementById('heroTextOriginal');
 
-            // Ripple class
-            class Ripple {
-                constructor(x, y) {
-                    this.x = x;
-                    this.y = y;
-                    this.radius = 0;
-                    this.maxRadius = 200;
-                    this.speed = 3;
-                    this.opacity = 1;
-                    this.lineWidth = 3;
-                }
+        if (heroTextOriginal && liquidContainer && typeof PIXI !== 'undefined') {
+            let app, displacementSprite, displacementFilter;
+            let mouseX = 0, mouseY = 0;
+            let isHovering = false;
 
-                update() {
-                    this.radius += this.speed;
-                    this.opacity = 1 - (this.radius / this.maxRadius);
-                    this.lineWidth = 3 * this.opacity;
-                }
-
-                draw() {
-                    ctx.beginPath();
-                    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-                    ctx.strokeStyle = `rgba(139, 92, 246, ${this.opacity * 0.6})`;
-                    ctx.lineWidth = this.lineWidth;
-                    ctx.stroke();
-                    
-                    // Inner ripple
-                    ctx.beginPath();
-                    ctx.arc(this.x, this.y, this.radius * 0.7, 0, Math.PI * 2);
-                    ctx.strokeStyle = `rgba(139, 92, 246, ${this.opacity * 0.3})`;
-                    ctx.lineWidth = this.lineWidth * 0.5;
-                    ctx.stroke();
-                }
-
-                isFinished() {
-                    return this.radius >= this.maxRadius;
-                }
-            }
-
-            // Animation loop
-            function animate() {
-                ctx.clearRect(0, 0, waterCanvas.width, waterCanvas.height);
-
-                ripples = ripples.filter(ripple => {
-                    ripple.update();
-                    ripple.draw();
-                    return !ripple.isFinished();
+            function initLiquidEffect() {
+                const rect = heroTextOriginal.getBoundingClientRect();
+                
+                // Create PixiJS application with transparent background
+                app = new PIXI.Application({
+                    width: rect.width,
+                    height: rect.height,
+                    backgroundAlpha: 0,
+                    transparent: true,
+                    resolution: window.devicePixelRatio || 1,
+                    antialias: true,
+                    autoDensity: true,
+                    clearBeforeRender: true
                 });
 
-                requestAnimationFrame(animate);
-            }
-            animate();
+                liquidContainer.appendChild(app.view);
+                app.view.style.width = '100%';
+                app.view.style.height = '100%';
+                app.view.style.background = 'transparent';
 
-            // Create ripple on hover/move
-            let lastRippleTime = 0;
-            heroTitle.addEventListener('mousemove', (e) => {
-                const now = Date.now();
-                if (now - lastRippleTime > 100) { // Throttle ripple creation
-                    const rect = heroTitle.getBoundingClientRect();
-                    const x = e.clientX - rect.left;
-                    const y = e.clientY - rect.top;
-                    ripples.push(new Ripple(x, y));
-                    lastRippleTime = now;
-                }
-            });
+                // Get computed text color from the original text
+                const computedStyle = window.getComputedStyle(heroTextOriginal);
+                const textColor = computedStyle.color || '#292524';
 
-            // Create ripple on click
-            heroTitle.addEventListener('click', (e) => {
-                const rect = heroTitle.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
+                // Create text sprite
+                const style = new PIXI.TextStyle({
+                    fontFamily: 'Playfair Display, Georgia, serif',
+                    fontSize: window.innerWidth > 768 ? 80 : 40,
+                    fontWeight: '400',
+                    fill: ['#292524', '#8B5CF6'],
+                    fillGradientType: 0,
+                    fillGradientStops: [0.3, 1],
+                    letterSpacing: -0.5,
+                    lineHeight: window.innerWidth > 768 ? 88 : 44,
+                });
+
+                const text = new PIXI.Text('Helping our partners\nbuild original brands\nthat shine.', style);
+                text.anchor.set(0, 0);
+                text.x = 0;
+                text.y = 0;
+
+                // Create canvas for displacement map
+                const canvas = document.createElement('canvas');
+                canvas.width = 512;
+                canvas.height = 512;
+                const ctx = canvas.getContext('2d');
                 
-                // Create multiple ripples for click
+                // Create cloud-like displacement map
                 for (let i = 0; i < 3; i++) {
-                    setTimeout(() => {
-                        ripples.push(new Ripple(x, y));
-                    }, i * 100);
+                    const gradient = ctx.createRadialGradient(
+                        Math.random() * 512, Math.random() * 512, 0,
+                        Math.random() * 512, Math.random() * 512, 256
+                    );
+                    gradient.addColorStop(0, `rgba(${Math.random() * 255}, 128, ${Math.random() * 255}, 0.8)`);
+                    gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+                    ctx.fillStyle = gradient;
+                    ctx.fillRect(0, 0, 512, 512);
+                }
+
+                displacementSprite = PIXI.Sprite.from(canvas);
+                displacementSprite.texture.baseTexture.wrapMode = PIXI.WRAP_MODES.REPEAT;
+
+                // Create displacement filter
+                displacementFilter = new PIXI.DisplacementFilter(displacementSprite);
+                displacementFilter.scale.x = 0;
+                displacementFilter.scale.y = 0;
+
+                // Add to stage
+                app.stage.addChild(displacementSprite);
+                app.stage.addChild(text);
+                text.filters = [displacementFilter];
+
+                // Animation loop
+                let time = 0;
+                app.ticker.add((delta) => {
+                    time += delta * 0.05;
+                    
+                    displacementSprite.x = Math.sin(time) * 50;
+                    displacementSprite.y = Math.cos(time) * 50;
+                    displacementSprite.rotation = time * 0.1;
+
+                    if (isHovering) {
+                        // Liquid distortion on hover
+                        const targetScaleX = 60 + Math.sin(time * 2) * 20;
+                        const targetScaleY = 60 + Math.cos(time * 2) * 20;
+                        
+                        displacementFilter.scale.x += (targetScaleX - displacementFilter.scale.x) * 0.1;
+                        displacementFilter.scale.y += (targetScaleY - displacementFilter.scale.y) * 0.1;
+                    } else {
+                        // Return to normal
+                        displacementFilter.scale.x += (0 - displacementFilter.scale.x) * 0.1;
+                        displacementFilter.scale.y += (0 - displacementFilter.scale.y) * 0.1;
+                    }
+                });
+            }
+
+            // Mouse interaction - only on text span
+            heroTextOriginal.addEventListener('mouseenter', () => {
+                isHovering = true;
+                if (!app) initLiquidEffect();
+                liquidContainer.style.opacity = '1';
+            });
+
+            heroTextOriginal.addEventListener('mouseleave', () => {
+                isHovering = false;
+                liquidContainer.style.opacity = '0';
+            });
+
+            heroTextOriginal.addEventListener('mousemove', (e) => {
+                if (!app) return;
+                const rect = heroTextOriginal.getBoundingClientRect();
+                mouseX = (e.clientX - rect.left) / rect.width;
+                mouseY = (e.clientY - rect.top) / rect.height;
+                
+                if (displacementSprite) {
+                    displacementSprite.x = mouseX * 100 - 50;
+                    displacementSprite.y = mouseY * 100 - 50;
                 }
             });
 
-            // Create random ambient ripples on hover
-            let ambientInterval;
-            heroTitle.addEventListener('mouseenter', () => {
-                ambientInterval = setInterval(() => {
-                    const x = Math.random() * waterCanvas.width;
-                    const y = Math.random() * waterCanvas.height;
-                    ripples.push(new Ripple(x, y));
-                }, 800);
-            });
-
-            heroTitle.addEventListener('mouseleave', () => {
-                clearInterval(ambientInterval);
+            // Cleanup on resize
+            let resizeTimeout;
+            window.addEventListener('resize', () => {
+                clearTimeout(resizeTimeout);
+                resizeTimeout = setTimeout(() => {
+                    if (app) {
+                        app.destroy(true);
+                        app = null;
+                        liquidContainer.innerHTML = '';
+                    }
+                }, 500);
             });
         }
 
@@ -3955,18 +4156,19 @@
             const servicesTrack = document.getElementById('servicesTrack');
             const servicesWrapper = document.querySelector('.services-horizontal-wrapper');
             
-            if (servicesTrack && servicesWrapper) {
+            // Only apply on desktop
+            if (window.innerWidth > 768 && servicesTrack && servicesWrapper) {
                 const cards = gsap.utils.toArray('.service-card-large');
                 
                 // Set initial state for all cards
                 gsap.set(cards, {
                     opacity: 0,
-                    scale: 0.85,
-                    y: 50
+                    scale: 0.9,
+                    y: 30
                 });
                 
-                // Calculate scroll distance based on number of cards
-                const scrollDistance = cards.length * 1200; // Increased for more time
+                // Calculate scroll distance - longer to show all 4 cards
+                const scrollDistance = cards.length * 1500;
                 
                 // Main horizontal scroll animation
                 let tl = gsap.timeline({
@@ -3974,19 +4176,20 @@
                         trigger: servicesWrapper,
                         start: 'top top',
                         end: `+=${scrollDistance}`,
-                        scrub: 1.5, // Smoother, more cinematic
+                        scrub: 1.2,
                         pin: true,
                         anticipatePin: 1,
                         invalidateOnRefresh: true,
                     }
                 });
 
-                // Calculate how much to move
+                // Calculate how much to move to show all cards
                 const getXDistance = () => {
-                    const cardWidth = 450;
+                    const cardWidth = 420;
                     const gap = 48;
                     const totalWidth = (cardWidth + gap) * cards.length;
-                    return -(totalWidth - window.innerWidth + 200);
+                    // Show last card fully before unpinning
+                    return -(totalWidth - window.innerWidth + (window.innerWidth * 0.1));
                 };
 
                 // Add horizontal movement to timeline
@@ -3996,32 +4199,26 @@
                     duration: 1
                 }, 0);
 
-                // Animate each card individually with stagger
+                // Animate each card - spread across full timeline
                 cards.forEach((card, index) => {
-                    const startProgress = index * 0.25; // Each card at 25% intervals
-                    const duration = 0.3;
+                    const startProgress = index * 0.2; // 20% intervals for 4 cards
+                    const duration = 0.25;
                     
                     tl.to(card, {
                         opacity: 1,
                         scale: 1,
                         y: 0,
-                        duration: duration,
-                        ease: 'power2.out',
-                    }, startProgress);
-
-                    // Add subtle rotation animation
-                    tl.from(card, {
-                        rotationY: 25,
+                        rotation: 0, // No rotation - keep cards straight
                         duration: duration,
                         ease: 'power2.out',
                     }, startProgress);
                 });
 
-                // Add parallax effect to card content on scroll
+                // Add parallax effect to card content
                 cards.forEach((card) => {
                     const content = card.querySelector('.service-card-content');
                     gsap.to(content, {
-                        y: -30,
+                        y: -20,
                         scrollTrigger: {
                             trigger: servicesWrapper,
                             start: 'top top',
