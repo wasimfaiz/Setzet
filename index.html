@@ -4784,50 +4784,122 @@
         }
       });
 
-      // Testimonial Carousel
-      let currentSlide = 0;
+      // Testimonial Carousel - Infinite Loop
+      let currentSlide = 1;
       const testimonialTrack = document.querySelector(".testimonial-track");
-      const testimonialCards = document.querySelectorAll(".testimonial-card");
+      let testimonialCards = document.querySelectorAll(".testimonial-card");
       const carouselDots = document.querySelector(".carousel-dots");
+      let isTransitioning = false;
 
-      // Create dots
-      if (carouselDots && testimonialCards.length > 0) {
-        testimonialCards.forEach((_, index) => {
+      // Setup Infinite Loop (Clones)
+      if (testimonialTrack && testimonialCards.length > 0) {
+        // Clone first and last cards
+        const firstClone = testimonialCards[0].cloneNode(true);
+        const lastClone =
+          testimonialCards[testimonialCards.length - 1].cloneNode(true);
+
+        firstClone.id = "first-clone";
+        lastClone.id = "last-clone";
+
+        testimonialTrack.appendChild(firstClone);
+        testimonialTrack.insertBefore(
+          lastClone,
+          testimonialTrack.firstElementChild,
+        );
+
+        // Re-query cards to include clones
+        testimonialCards = document.querySelectorAll(".testimonial-card");
+      }
+
+      // Create dots (based on original count)
+      if (carouselDots && testimonialCards.length > 2) {
+        // Original count is total - 2 clones
+        const originalCount = testimonialCards.length - 2;
+
+        for (let i = 0; i < originalCount; i++) {
           const dot = document.createElement("div");
           dot.className = "carousel-dot";
-          if (index === 0) dot.classList.add("active");
-          dot.addEventListener("click", () => goToSlide(index));
+          if (i === 0) dot.classList.add("active");
+          dot.addEventListener("click", () => {
+            if (isTransitioning) return;
+            currentSlide = i + 1; // Map 0 to 1 (first real slide)
+            updateCarousel();
+          });
           carouselDots.appendChild(dot);
-        });
+        }
+      }
+
+      // Initial Position
+      if (testimonialCards.length > 0) {
+        updateCarousel(false); // No transition for initial set
       }
 
       function moveCarousel(direction) {
+        if (isTransitioning) return;
+
         const maxSlide = testimonialCards.length - 1;
         currentSlide += direction;
 
-        if (currentSlide < 0) currentSlide = maxSlide;
-        if (currentSlide > maxSlide) currentSlide = 0;
-
-        updateCarousel();
+        updateCarousel(true);
       }
 
-      function goToSlide(index) {
-        currentSlide = index;
-        updateCarousel();
-      }
+      function updateCarousel(animate = true) {
+        if (!testimonialTrack) return;
 
-      function updateCarousel() {
         const cardWidth = testimonialCards[0].offsetWidth;
         const gap = 32; // 2rem gap
-        const offset = -(currentSlide * (cardWidth + gap));
 
-        if (testimonialTrack) {
-          testimonialTrack.style.transform = `translateX(${offset}px)`;
+        // Add transition if animating
+        if (animate) {
+          testimonialTrack.style.transition =
+            "transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)";
+          isTransitioning = true;
+        } else {
+          testimonialTrack.style.transition = "none";
         }
 
-        // Update dots
+        const offset = -(currentSlide * (cardWidth + gap));
+        testimonialTrack.style.transform = `translateX(${offset}px)`;
+
+        // Handle Infinite Loop Reset on Transition End
+        if (animate) {
+          testimonialTrack.addEventListener(
+            "transitionend",
+            () => {
+              isTransitioning = false;
+
+              // If at Last Clone (End), jump to First Real Card
+              if (currentSlide === testimonialCards.length - 1) {
+                testimonialTrack.style.transition = "none";
+                currentSlide = 1;
+                const resetOffset = -(currentSlide * (cardWidth + gap));
+                testimonialTrack.style.transform = `translateX(${resetOffset}px)`;
+              }
+
+              // If at First Clone (Start), jump to Last Real Card
+              if (currentSlide === 0) {
+                testimonialTrack.style.transition = "none";
+                currentSlide = testimonialCards.length - 2;
+                const resetOffset = -(currentSlide * (cardWidth + gap));
+                testimonialTrack.style.transform = `translateX(${resetOffset}px)`;
+              }
+            },
+            { once: true },
+          );
+        }
+
+        // Update dots (Map currentSlide to dot index)
+        // Slide 1 -> Dot 0, Slide 2 -> Dot 1 ... Slide Max -> Dot Max
+        // Slide 0 (Clone) -> Dot Max
+        // Slide Last (Clone) -> Dot 0
+        const originalCount = testimonialCards.length - 2;
+        let activeDotIndex = currentSlide - 1;
+
+        if (currentSlide === 0) activeDotIndex = originalCount - 1;
+        if (currentSlide === testimonialCards.length - 1) activeDotIndex = 0;
+
         document.querySelectorAll(".carousel-dot").forEach((dot, index) => {
-          dot.classList.toggle("active", index === currentSlide);
+          dot.classList.toggle("active", index === activeDotIndex);
         });
       }
 
